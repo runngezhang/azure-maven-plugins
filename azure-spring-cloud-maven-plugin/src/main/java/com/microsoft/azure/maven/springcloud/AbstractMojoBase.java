@@ -147,6 +147,7 @@ public abstract class AbstractMojoBase extends AbstractMojo {
         trackMojoExecution(MojoStatus.Start);
         final MavenAuthConfiguration mavenAuthConfiguration = auth == null ? new MavenAuthConfiguration() : auth;
         mavenAuthConfiguration.setType(getAuthType());
+        MavenAuthUtils.injectHttpProxy(mavenAuthConfiguration, this.httpProxyHost, this.httpProxyPort);
         this.azureTokenCredentials = MavenAuthUtils.login(session, settingsDecrypter, mavenAuthConfiguration);
         // Use oauth if no existing credentials
         if (Objects.isNull(azureTokenCredentials)) {

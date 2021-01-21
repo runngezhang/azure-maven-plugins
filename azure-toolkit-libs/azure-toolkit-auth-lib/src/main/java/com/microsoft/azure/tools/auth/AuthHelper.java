@@ -17,8 +17,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class AuthHelper {
-    private static final String UNKNOWN = "UNKNOWN";
-
     private static final Map<AzureEnvironment, String[]> AZURE_CLOUD_ALIAS_MAP = new HashMap<>();
 
     static {
@@ -46,6 +44,8 @@ public class AuthHelper {
     }
 
     public static void setupAzureEnvironment(AzureEnvironment env) {
+        setPropertyIfNotExist("org.slf4j.simpleLogger.log.com.azure.identity", "off");
+        setPropertyIfNotExist("org.slf4j.simpleLogger.log.com.microsoft.aad.msal4jextensions", "off");
         if (env != null && env != AzureEnvironment.AZURE) {
             // change the default azure env after it is initialized in azure identity
             // see code at
@@ -55,14 +55,12 @@ public class AuthHelper {
         }
     }
 
-    /**
-     * Validate the azure environment.
-     *
-     * @param environment the environment string
-     * @return true if the environment string is a valid azure environment
-     */
-    public static boolean validateEnvironment(String environment) {
-        return stringToAzureEnvironment(environment) != null;
+    public static void setupAuthProxy(String httpProxyHost, String httpProxyPort) {
+        if (StringUtils.isNotBlank(httpProxyHost)) {
+            Configuration.getGlobalConfiguration().put(Configuration.PROPERTY_HTTP_PROXY, String.format("http://%s:%s", httpProxyHost, httpProxyPort));
+            setPropertyIfNotExist("http.proxyHost", httpProxyHost);
+            setPropertyIfNotExist("http.proxyPort", httpProxyPort);
+        }
     }
 
     /**
@@ -72,7 +70,7 @@ public class AuthHelper {
      * @return the AzureEnvironment instance
      */
     public static AzureEnvironment stringToAzureEnvironment(String environment) {
-        String targetEnvironment = StringUtils.replaceChars(environment, '-', '_');
+        final String targetEnvironment = StringUtils.replaceChars(environment, '-', '_');
         return AZURE_CLOUD_ALIAS_MAP.entrySet().stream().filter(entry -> StringListUtils.containsIgnoreCase(Arrays.asList(entry.getValue()), targetEnvironment))
                 .map(Map.Entry::getKey)
                 .findFirst().orElse(null);
@@ -80,5 +78,11 @@ public class AuthHelper {
 
     private static void putAliasMap(AzureEnvironment env, String... aliases) {
         AZURE_CLOUD_ALIAS_MAP.put(env, aliases);
+    }
+
+    private static void setPropertyIfNotExist(String key, String value) {
+        if (StringUtils.isBlank(System.getProperty(key))) {
+            System.setProperty(key, value);
+        }
     }
 }

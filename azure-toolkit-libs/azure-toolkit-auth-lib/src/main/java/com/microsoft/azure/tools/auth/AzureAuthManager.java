@@ -17,18 +17,25 @@ import com.microsoft.azure.tools.auth.core.oauth.OAuthCredentialRetriever;
 import com.microsoft.azure.tools.auth.core.serviceprincipal.ServicePrincipalCredentialRetriever;
 import com.microsoft.azure.tools.auth.core.visualstudio.VisualStudioCredentialRetriever;
 import com.microsoft.azure.tools.auth.core.vscode.VisualStudioCodeCredentialRetriever;
+import com.microsoft.azure.tools.auth.exception.InvalidConfigurationException;
 import com.microsoft.azure.tools.auth.exception.LoginFailureException;
 import com.microsoft.azure.tools.auth.model.AuthConfiguration;
 import com.microsoft.azure.tools.auth.model.AuthType;
 import com.microsoft.azure.tools.auth.model.AzureCredentialWrapper;
+import com.microsoft.azure.tools.auth.util.ValidationUtil;
+import org.apache.commons.lang3.StringUtils;
 import rx.Single;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class AzureAuthManager {
-    public static Single<AzureCredentialWrapper> getAzureCredentialWrapper(AuthConfiguration configuration) {
+    public static Single<AzureCredentialWrapper> getAzureCredentialWrapper(AuthConfiguration configuration) throws InvalidConfigurationException {
         AuthConfiguration auth = MoreObjects.firstNonNull(configuration, new AuthConfiguration());
+        if (StringUtils.isNotBlank(auth.getHttpProxyHost())) {
+            ValidationUtil.validateHttpProxy(auth.getHttpProxyHost(), auth.getHttpProxyPort());
+            AuthHelper.setupAuthProxy(auth.getHttpProxyHost(), Integer.toString(auth.getHttpProxyPort()));
+        }
         AuthHelper.setupAzureEnvironment(auth.getEnvironment());
         ChainedCredentialRetriever chainedCredentialRetriever = new ChainedCredentialRetriever();
         AuthType authType = MoreObjects.firstNonNull(auth.getType(), AuthType.AUTO);

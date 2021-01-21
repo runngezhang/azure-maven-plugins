@@ -31,9 +31,11 @@ import com.microsoft.azure.maven.utils.MavenUtils;
 import com.microsoft.azure.tools.auth.AuthHelper;
 import com.microsoft.azure.tools.auth.exception.AzureLoginException;
 import com.microsoft.azure.tools.auth.model.AzureCredentialWrapper;
+import com.microsoft.azure.tools.common.util.ProxyUtils;
 import com.microsoft.azure.tools.common.util.StringListUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -55,6 +57,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.management.ManagementFactory;
+import java.net.Proxy;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collection;
@@ -172,14 +175,14 @@ public abstract class AbstractAzureMojo extends AbstractMojo implements Telemetr
     /**
      * Use a HTTP proxy host for the Azure Auth Client
      */
-    @Parameter(property = "httpProxyHost", readonly = false, required = false)
+    @Parameter(property = "httpProxyHost")
     protected String httpProxyHost;
 
     /**
      * Use a HTTP proxy port for the Azure Auth Client
      */
-    @Parameter(property = "httpProxyPort", defaultValue = "80")
-    protected int httpProxyPort;
+    @Parameter(property = "httpProxyPort")
+    protected String httpProxyPort;
 
     /**
      * Authentication type, could be oauth2, device_code, azure_cli,..., see <code>AuthType</code>
@@ -279,7 +282,7 @@ public abstract class AbstractAzureMojo extends AbstractMojo implements Telemetr
 
     @Override
     public int getHttpProxyPort() {
-        return httpProxyPort;
+        return NumberUtils.toInt(httpProxyPort, 0);
     }
 
     public Azure getAzureClient() throws AzureAuthFailureException, AzureExecutionException {
@@ -335,10 +338,10 @@ public abstract class AbstractAzureMojo extends AbstractMojo implements Telemetr
     }
 
     protected Azure getOrCreateAzureClient() throws AzureAuthFailureException, AzureExecutionException {
-
         try {
             final MavenAuthConfiguration mavenAuthConfiguration = auth == null ? new MavenAuthConfiguration() : auth;
             mavenAuthConfiguration.setType(getAuthType());
+            MavenAuthUtils.injectHttpProxy(mavenAuthConfiguration, this.httpProxyHost, this.httpProxyPort);
             azureCredentialWrapper = MavenAuthUtils.login(session, settingsDecrypter, mavenAuthConfiguration);
             if (Objects.isNull(azureCredentialWrapper)) {
                 return null;
@@ -350,7 +353,9 @@ public abstract class AbstractAzureMojo extends AbstractMojo implements Telemetr
                 Log.prompt(String.format(USING_AZURE_ENVIRONMENT, TextUtils.green(environmentName)));
             }
             Log.info(azureCredentialWrapper.getCredentialDescription());
+            final Proxy proxy = ProxyUtils.createHttpProxy(getHttpProxyHost(), Integer.toString(getHttpProxyPort()));
             final Azure tempAzure = Azure.configure()
+                    .withProxy(proxy)
                     .authenticate(azureCredentialWrapper.getAzureTokenCredentials()).withDefaultSubscription();
             final PagedList<Subscription> subscriptions = tempAzure.subscriptions().list();
             subscriptions.loadAll();
@@ -374,7 +379,7 @@ public abstract class AbstractAzureMojo extends AbstractMojo implements Telemetr
 
             checkSubscription(subscriptions, defaultSubscriptionId);
             azureCredentialWrapper.withDefaultSubscriptionId(defaultSubscriptionId);
-            return AzureClientFactory.getAzureClient(azureCredentialWrapper, getUserAgent());
+            return AzureClientFactory.getAzureClient(azureCredentialWrapper, getUserAgent(), getHttpProxyHost(), getHttpProxyPort());
         } catch (AzureLoginException | IOException e) {
             throw new AzureAuthFailureException(e.getMessage());
         }
@@ -645,4 +650,5 @@ public abstract class AbstractAzureMojo extends AbstractMojo implements Telemetr
             throw new AzureLoginException(String.format(SUBSCRIPTION_NOT_FOUND, targetSubscriptionId));
         }
     }
+
 }

@@ -65,7 +65,7 @@ public class MavenAuthUtils {
     }
 
     public static AzureCredentialWrapper login(MavenSession session, SettingsDecrypter settingsDecrypter, @Nonnull MavenAuthConfiguration auth)
-            throws AzureExecutionException, MavenDecryptException {
+            throws AzureExecutionException, MavenDecryptException, InvalidConfigurationException {
         final String serverId = auth.getServerId();
         final com.microsoft.azure.tools.auth.model.AuthConfiguration authConfiguration;
         try {
@@ -77,6 +77,14 @@ public class MavenAuthUtils {
             throw new AzureExecutionException(String.format("%s %s", ex.getMessage(), messagePostfix));
         }
         return AzureAuthManager.getAzureCredentialWrapper(authConfiguration).toBlocking().value();
+    }
+
+    public static void injectHttpProxy(MavenAuthConfiguration authConfiguration, String httpProxyHost, String httpProxyPort) {
+        if (StringUtils.isAllBlank(httpProxyHost, httpProxyPort)) {
+            return;
+        }
+        authConfiguration.setHttpProxyHost(StringUtils.firstNonBlank(httpProxyHost, authConfiguration.getHttpProxyHost()));
+        authConfiguration.setHttpProxyPort(StringUtils.firstNonBlank(httpProxyPort, authConfiguration.getHttpProxyPort()));
     }
 
 }
