@@ -13,6 +13,7 @@ import com.microsoft.azure.tools.auth.core.ICredentialRetriever;
 import com.microsoft.azure.tools.auth.core.azurecli.AzureCliCredentialRetriever;
 import com.microsoft.azure.tools.auth.core.devicecode.DeviceCodeCredentialRetriever;
 import com.microsoft.azure.tools.auth.core.managedidentity.ManagedIdentityCredentialRetriever;
+import com.microsoft.azure.tools.auth.core.maven.MavenLoginCredentialRetriever;
 import com.microsoft.azure.tools.auth.core.oauth.OAuthCredentialRetriever;
 import com.microsoft.azure.tools.auth.core.serviceprincipal.ServicePrincipalCredentialRetriever;
 import com.microsoft.azure.tools.auth.core.visualstudio.VisualStudioCredentialRetriever;
@@ -21,7 +22,7 @@ import com.microsoft.azure.tools.auth.exception.LoginFailureException;
 import com.microsoft.azure.tools.auth.model.AuthConfiguration;
 import com.microsoft.azure.tools.auth.model.AuthType;
 import com.microsoft.azure.tools.auth.model.AzureCredentialWrapper;
-import org.apache.commons.lang3.StringUtils;
+import com.microsoft.azure.tools.auth.util.AzureEnvironmentUtils;
 import rx.Single;
 
 import java.util.LinkedHashMap;
@@ -30,10 +31,7 @@ import java.util.Map;
 public class AzureAuthManager {
     public static Single<AzureCredentialWrapper> getAzureCredentialWrapper(AuthConfiguration configuration) {
         AuthConfiguration auth = MoreObjects.firstNonNull(configuration, new AuthConfiguration());
-        if (StringUtils.isNotBlank(auth.getHttpProxyHost())) {
-            AuthHelper.setupAuthProxy(auth.getHttpProxyHost(), Integer.toString(auth.getHttpProxyPort()));
-        }
-        AuthHelper.setupAzureEnvironment(auth.getEnvironment());
+        AzureEnvironmentUtils.setupAzureEnvironment(auth.getEnvironment());
         ChainedCredentialRetriever chainedCredentialRetriever = new ChainedCredentialRetriever();
         AuthType authType = MoreObjects.firstNonNull(auth.getType(), AuthType.AUTO);
         Map<AuthType, ICredentialRetriever> allRetrievers = buildCredentialRetrievers(configuration);
@@ -63,6 +61,7 @@ public class AzureAuthManager {
         map.put(AuthType.VISUAL_STUDIO, new VisualStudioCredentialRetriever(env));
         map.put(AuthType.OAUTH2, new OAuthCredentialRetriever(env));
         map.put(AuthType.DEVICE_CODE, new DeviceCodeCredentialRetriever(env));
+        map.put(AuthType.AZURE_AUTH_MAVEN_PLUGIN, new MavenLoginCredentialRetriever(env));
         return map;
     }
 }
