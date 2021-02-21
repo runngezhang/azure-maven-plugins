@@ -21,13 +21,17 @@ import java.util.Map;
 @Getter
 @Setter
 public class SpringCloudDeploymentConfig {
-    private Integer cpu;
-    private Integer memoryInGB;
-    private Integer instanceCount;
+    @Builder.Default
+    private Integer cpu = 1;
+    @Builder.Default
+    private Integer memoryInGB = 1;
+    @Builder.Default
+    private Integer instanceCount = 1;
     private String deploymentName;
     private String jvmOptions;
     private String runtimeVersion;
-    private Boolean enablePersistentStorage;
+    @Builder.Default
+    private Boolean enablePersistentStorage = false;
     private Map<String, String> environment;
     @Nullable
     private IArtifact artifact;

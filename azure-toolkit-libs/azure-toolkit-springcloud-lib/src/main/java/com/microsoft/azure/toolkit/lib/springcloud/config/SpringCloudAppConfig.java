@@ -19,10 +19,13 @@ public class SpringCloudAppConfig {
     private String clusterName;
     private String appName;
     private String resourceGroup;
-    private Boolean isPublic;
-    private String runtimeVersion;
+    @Builder.Default
+    private Boolean isPublic = false;
+    @Builder.Default
+    private String runtimeVersion = "java_8";
     private String activeDeploymentName;
-    private SpringCloudDeploymentConfig deployment;
+    @Builder.Default
+    private SpringCloudDeploymentConfig deployment = SpringCloudDeploymentConfig.builder().build();
 
     public Boolean isPublic() {
         return BooleanUtils.isTrue(isPublic);
