@@ -72,7 +72,7 @@ public class DeployMojo extends AbstractMojoBase {
         final SpringCloudAppConfig appConfig = this.getConfiguration();
         final SpringCloudDeploymentConfig deploymentConfig = appConfig.getDeployment();
         final IArtifact artifact = deploymentConfig.getArtifact();
-        final File file = Objects.nonNull(artifact) ? artifact.getFile() : MavenArtifactUtils.getArtifactFromTargetFolder(project);
+        final File file = Objects.nonNull(artifact) ? ((IArtifact.FileArtifact) artifact).getFile() : MavenArtifactUtils.getArtifactFromTargetFolder(project);
         final boolean enableDisk = appConfig.getDeployment() != null && appConfig.getDeployment().isEnablePersistentStorage();
         final String clusterName = appConfig.getClusterName();
         final String appName = appConfig.getAppName();
