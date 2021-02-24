@@ -171,7 +171,8 @@ public class AzureAccount implements AzureService {
         map.put(AuthType.AZURE_CLI, new AzureCliAccountEntityBuilder());
 
         map.put(AuthType.VSCODE, new VisualStudioCodeAccountEntityBuilder());
-        map.put(AuthType.VISUAL_STUDIO, new VisualStudioAccountEntityBuilder());
+        // null is valid for visual studio account builder
+        map.put(AuthType.VISUAL_STUDIO, new VisualStudioAccountEntityBuilder(env));
         map.put(AuthType.AZURE_AUTH_MAVEN_PLUGIN, new MavenLoginAccountEntityBuilder());
         map.put(AuthType.OAUTH2, new OAuthAccountEntityBuilder(environmentOrDefault));
         map.put(AuthType.DEVICE_CODE, new DeviceCodeAccountEntityBuilder(environmentOrDefault));
