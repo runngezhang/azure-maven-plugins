@@ -98,7 +98,7 @@ public class AzCommandUtils {
                     return JsonUtils.getGson().fromJson(output.toString(), JsonObject.class);
                 }
             } catch (JsonParseException ex) {
-                throw new IllegalStateException(String.format("Cannot execute command '%s', the output '%s' cannot be parsed as JSON",
+                throw new IllegalStateException(String.format("Cannot execute command '%s', the output '%s' cannot be parsed as a JSON.",
                         command, output.toString()));
             }
         } catch (IOException | InterruptedException e) {
