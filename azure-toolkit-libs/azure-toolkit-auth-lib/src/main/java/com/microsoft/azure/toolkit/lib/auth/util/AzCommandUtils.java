@@ -11,6 +11,8 @@ import com.azure.identity.CredentialUnavailableException;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
+import com.google.gson.JsonSyntaxException;
 import com.microsoft.azure.toolkit.lib.common.utils.JsonUtils;
 import org.apache.commons.lang3.StringUtils;
 
@@ -89,12 +91,16 @@ public class AzCommandUtils {
                 }
             }
 
-            if (StringUtils.startsWith(StringUtils.trim(processOutput), "[")) {
-                return JsonUtils.getGson().fromJson(output.toString(), JsonArray.class);
-            } else {
-                return JsonUtils.getGson().fromJson(output.toString(), JsonObject.class);
+            try {
+                if (StringUtils.startsWith(StringUtils.trim(processOutput), "[")) {
+                    return JsonUtils.getGson().fromJson(output.toString(), JsonArray.class);
+                } else {
+                    return JsonUtils.getGson().fromJson(output.toString(), JsonObject.class);
+                }
+            } catch (JsonParseException ex) {
+                throw new IllegalStateException(String.format("Cannot execute command '%s', the output '%s' cannot be parsed as JSON",
+                        command, output.toString()));
             }
-
         } catch (IOException | InterruptedException e) {
             throw new IllegalStateException(e);
         } finally {
